@@ -1,0 +1,10 @@
+{
+  "name": "sdf-playground",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@ai-playground/sdf-core": "*",
+    "@ai-playground/input-system": "*",
+    "pixi.js": "^8.0.0"
+  }
+}

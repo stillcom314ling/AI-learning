@@ -1,0 +1,23 @@
+# Deck Rewind - Python Dependencies
+
+# Configuration
+pyyaml>=6.0
+
+# Process management
+psutil>=5.9.0
+
+# Controller input (Steam Deck hotkeys)
+evdev>=1.6.0
+
+# Desktop notifications
+notify2>=0.3.1
+
+# Compression for snapshots
+zstandard>=0.21.0
+
+# Development dependencies
+# pytest>=7.0.0
+# pytest-cov>=4.0.0
+# black>=23.0.0
+# flake8>=6.0.0
+# mypy>=1.0.0

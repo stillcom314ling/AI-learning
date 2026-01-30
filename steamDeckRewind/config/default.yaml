@@ -1,0 +1,124 @@
+# Deck Rewind - Default Configuration
+# Copy this file to ~/.config/deck-rewind/config.yaml and customize as needed
+
+# =============================================================================
+# SNAPSHOT SETTINGS
+# =============================================================================
+snapshots:
+  # How often to take automatic snapshots (in seconds)
+  # Lower values = more snapshots, more disk usage
+  # Higher values = fewer snapshots, less granular rewind
+  interval_seconds: 30
+
+  # Maximum number of rolling (auto) snapshots to keep per game
+  # Named snapshots are not affected by this limit
+  max_rolling_snapshots: 10
+
+  # Where to store snapshot data
+  # Use absolute path or ~ for home directory
+  storage_path: "~/.local/share/deck-rewind/snapshots"
+
+  # Compression algorithm (zstd recommended for speed/ratio balance)
+  compression: "zstd"
+
+  # Compression level (1-22 for zstd)
+  # Lower = faster, larger files
+  # Higher = slower, smaller files
+  # Recommended: 3 for balance
+  compression_level: 3
+
+# =============================================================================
+# SNAPSHOT METHOD
+# =============================================================================
+snapshot_method:
+  # Prefer CRIU for full process snapshots
+  # CRIU provides better restore fidelity but requires root access
+  prefer_criu: true
+
+  # Fall back to memory dump if CRIU fails
+  # Memory dump is less reliable but works without special permissions
+  fallback_to_memory_dump: true
+
+  # Save thread context information (improves restore accuracy)
+  save_thread_contexts: true
+
+# =============================================================================
+# STORAGE LIMITS
+# =============================================================================
+storage:
+  # Maximum total storage for all snapshots (in GB)
+  # Oldest unnamed snapshots are deleted when limit is reached
+  max_total_size_gb: 10
+
+  # Automatically clean up snapshots when running low on space
+  auto_cleanup: true
+
+# =============================================================================
+# HOTKEY BINDINGS
+# =============================================================================
+# Format: "button+button" (lowercase)
+# Available buttons: steam, l1, l2, r1, r2, a, b, x, y,
+#                   dpad_up, dpad_down, dpad_left, dpad_right,
+#                   start, select
+hotkeys:
+  # Rewind to most recent snapshot
+  rewind_previous: "steam+l2"
+
+  # Navigate through snapshot history
+  rewind_back: "steam+dpad_left"
+  rewind_forward: "steam+dpad_right"
+
+  # Show number of available snapshots
+  list_snapshots: "steam+dpad_up"
+
+  # Create a named snapshot (won't auto-delete)
+  manual_snapshot: "steam+l1"
+
+# =============================================================================
+# USER INTERFACE
+# =============================================================================
+ui:
+  # Show on-screen notifications
+  show_notifications: true
+
+  # How long notifications stay on screen (seconds)
+  notification_duration_seconds: 3
+
+  # Position of overlay (if supported)
+  # Options: top-left, top-right, bottom-left, bottom-right, center
+  overlay_position: "top-right"
+
+# =============================================================================
+# GAME FILTERING
+# =============================================================================
+games:
+  # Games to never snapshot (by Steam App ID or name)
+  # Useful for online multiplayer games where rewinding doesn't make sense
+  blacklist:
+    # - "570"      # Dota 2
+    # - "730"      # CS:GO
+    # - "440"      # Team Fortress 2
+
+  # If set, ONLY snapshot these games (leave empty to snapshot all)
+  whitelist: []
+    # - "413150"   # Stardew Valley
+    # - "1145360"  # Hades
+
+# =============================================================================
+# ADVANCED SETTINGS
+# =============================================================================
+advanced:
+  # Minimum free disk space required before pausing snapshots (GB)
+  min_free_space_gb: 2
+
+  # How often to check for running games (seconds)
+  game_check_interval: 1
+
+  # Enable debug logging
+  debug_logging: false
+
+  # Path to log file
+  log_file: "~/.local/share/deck-rewind/daemon.log"
+
+  # Maximum log file size before rotation (MB)
+  max_log_size_mb: 10

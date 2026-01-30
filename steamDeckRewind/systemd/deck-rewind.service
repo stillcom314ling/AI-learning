@@ -1,0 +1,30 @@
+[Unit]
+Description=Deck Rewind - Game Save State Daemon
+Documentation=https://github.com/[USER]/deck-rewind
+After=graphical-session.target
+Wants=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/deck-rewind start --foreground
+ExecStop=%h/.local/bin/deck-rewind stop
+Restart=on-failure
+RestartSec=5
+
+# Environment
+Environment=DISPLAY=:0
+Environment=XDG_RUNTIME_DIR=/run/user/%U
+
+# Security hardening
+NoNewPrivileges=false
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.local/share/deck-rewind
+ReadWritePaths=%h/.config/deck-rewind
+
+# Resource limits
+MemoryMax=512M
+CPUQuota=50%
+
+[Install]
+WantedBy=default.target

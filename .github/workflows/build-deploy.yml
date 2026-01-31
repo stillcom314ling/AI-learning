@@ -8,6 +8,9 @@ jobs:
   build-deploy:
     if: github.event.issue.pull_request && contains(github.event.comment.body, '/build')
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     permissions:
       contents: write
       pull-requests: write
@@ -53,6 +56,8 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Comment on PR
         uses: actions/github-script@v7
@@ -62,5 +67,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: '✅ Build complete! Preview: https://${{ github.repository_owner }}.github.io/AI-playground/'
+              body: '✅ Build complete! Preview: https://${{ github.repository_owner }}.github.io/AI-learning/'
             });

@@ -10,7 +10,7 @@ export default defineConfig({
       },
     },
   },
-  base: '/AI-playground/',
+  base: '/',
   server: {
     host: '0.0.0.0',
     port: 5173,

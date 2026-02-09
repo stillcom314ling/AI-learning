@@ -12,10 +12,10 @@ This file contains all task specifications for building the AI-playground monore
 | 1 | feature/monorepo-foundation | Task 0 | Complete |
 | 2 | feature/github-actions-workflow | Task 1 | Complete |
 | 3 | feature/sdf-core-library | Task 1 | Complete |
-| 4 | feature/input-system | Task 1 | Not Started |
-| 5 | feature/pixi-ui-toggle | Task 3 | Not Started |
-| 6 | feature/sdf-playground-prototype | Task 3, 4, 5 | Not Started |
-| 7 | feature/launcher-page | Task 6 | Not Started |
+| 4 | feature/input-system | Task 1 | Complete |
+| 5 | feature/pixi-ui-toggle | Task 3 | Complete |
+| 6 | feature/sdf-playground-prototype | Task 3, 4, 5 | Complete |
+| 7 | feature/launcher-page | Task 6 | Complete |
 
 ---
 

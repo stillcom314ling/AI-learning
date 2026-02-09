@@ -1,1 +1,1 @@
-// SDF Core Library - Entry Point
+export { SDFScene } from './SDFScene.js';

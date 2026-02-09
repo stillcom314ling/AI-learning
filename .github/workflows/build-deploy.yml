@@ -8,14 +8,9 @@ jobs:
   build-deploy:
     if: github.event.issue.pull_request && contains(github.event.comment.body, '/build')
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     permissions:
       contents: write
       pull-requests: write
-      pages: write
-      id-token: write
 
     steps:
       - name: Get PR branch
@@ -48,24 +43,22 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        id: artifact
         with:
+          name: build-preview-pr-${{ github.event.issue.number }}
           path: ./dist
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          retention-days: 30
 
       - name: Comment on PR
         uses: actions/github-script@v7
         with:
           script: |
+            const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
             github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: '✅ Build complete! Preview: https://${{ github.repository_owner }}.github.io/AI-learning/'
+              body: `✅ Build complete! Download the build artifact from the [Actions run](${runUrl}).`
             });

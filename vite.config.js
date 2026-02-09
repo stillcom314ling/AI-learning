@@ -10,7 +10,7 @@ export default defineConfig({
       },
     },
   },
-  base: '/AI-learning/',
+  base: '/',
   server: {
     host: '0.0.0.0',
     port: 5173,

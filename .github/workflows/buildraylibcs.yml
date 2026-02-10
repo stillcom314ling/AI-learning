@@ -1,0 +1,78 @@
+name: Build RaylibCS
+
+on:
+  push:
+    branches:
+      - main
+      - 'claude/**'
+      - 'feature/**'
+    paths:
+      - 'raylibcs/**'
+      - '.github/workflows/buildraylibcs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-wasm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Pin .NET 8 SDK
+        run: |
+          echo '{"sdk":{"version":"8.0.100","rollForward":"latestFeature"}}' > global.json
+          dotnet --version
+
+      - name: Install wasm-tools workload
+        run: dotnet workload install wasm-tools
+
+      - name: Restore dependencies
+        run: dotnet restore raylibcs/RaylibCS.csproj
+
+      - name: Publish WASM
+        run: dotnet publish raylibcs/RaylibCS.csproj -c Release
+        timeout-minutes: 30
+
+      - name: Upload WASM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: raylibcs-wasm-${{ github.sha }}
+          path: raylibcs/bin/Release/net8.0/browser-wasm/AppBundle/
+          retention-days: 30
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: raylibcs/bin/Release/net8.0/browser-wasm/AppBundle/
+
+  deploy:
+    needs: build-wasm
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

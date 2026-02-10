@@ -33,6 +33,11 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Pin .NET 8 SDK
+        run: |
+          echo '{"sdk":{"version":"8.0.100","rollForward":"latestFeature"}}' > global.json
+          dotnet --version
+
       - name: Install wasm-tools workload
         run: dotnet workload install wasm-tools
 

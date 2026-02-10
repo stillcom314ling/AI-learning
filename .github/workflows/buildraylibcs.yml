@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-linux:
+  build-wasm:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -26,48 +26,19 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore dependencies
-        run: dotnet restore raylibcs/RaylibCS.csproj
-
-      - name: Build
-        run: dotnet build raylibcs/RaylibCS.csproj -c Release --no-restore
-
-      - name: Publish self-contained
-        run: dotnet publish raylibcs/RaylibCS.csproj -c Release -r linux-x64 --self-contained -o raylibcs/publish/linux-x64
-
-      - name: Upload Linux build
-        uses: actions/upload-artifact@v4
-        with:
-          name: raylibcs-linux-x64-${{ github.sha }}
-          path: raylibcs/publish/linux-x64
-          retention-days: 30
-
-  build-windows:
-    runs-on: windows-latest
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET 8
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
+      - name: Install wasm-tools workload
+        run: dotnet workload install wasm-tools
 
       - name: Restore dependencies
         run: dotnet restore raylibcs/RaylibCS.csproj
 
-      - name: Build
-        run: dotnet build raylibcs/RaylibCS.csproj -c Release --no-restore
+      - name: Publish WASM
+        run: dotnet publish raylibcs/RaylibCS.csproj -c Release
+        timeout-minutes: 30
 
-      - name: Publish self-contained
-        run: dotnet publish raylibcs/RaylibCS.csproj -c Release -r win-x64 --self-contained -o raylibcs/publish/win-x64
-
-      - name: Upload Windows build
+      - name: Upload WASM build
         uses: actions/upload-artifact@v4
         with:
-          name: raylibcs-win-x64-${{ github.sha }}
-          path: raylibcs/publish/win-x64
+          name: raylibcs-wasm-${{ github.sha }}
+          path: raylibcs/bin/Release/net8.0/browser-wasm/AppBundle/
           retention-days: 30

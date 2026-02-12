@@ -11,42 +11,38 @@ public class Board : MonoBehaviour
     public const int Cols = 6;
     public const int Rows = 7;
 
-    [SerializeField] private GameObject orbPrefab;
     [SerializeField] private float cellSize = 1.1f;
 
+    private GameObject orbPrefab;
     private Orb[,] grid = new Orb[Rows, Cols];
     private Vector3 boardOrigin;
+    private bool initialized;
 
     public float CellSize => cellSize;
     public bool IsBusy { get; private set; }
 
-    private void Awake()
+    /// <summary>
+    /// Called by Match3SceneSetup to provide the runtime-generated orb prefab.
+    /// </summary>
+    public void Init(GameObject prefab)
     {
-        // Center the board on screen
+        orbPrefab = prefab;
+
         boardOrigin = new Vector3(
             -(Cols - 1) * cellSize / 2f,
             -(Rows - 1) * cellSize / 2f,
             0f
         );
-    }
 
-    private void Start()
-    {
+        initialized = true;
         FillBoard();
     }
 
-    /// <summary>
-    /// Returns the world position for a given row, col.
-    /// Row 0 is the top row.
-    /// </summary>
     public Vector3 GridToWorld(int row, int col)
     {
         return boardOrigin + new Vector3(col * cellSize, (Rows - 1 - row) * cellSize, 0f);
     }
 
-    /// <summary>
-    /// Converts a world position to (row, col). Returns false if out of bounds.
-    /// </summary>
     public bool WorldToGrid(Vector3 worldPos, out int row, out int col)
     {
         Vector3 local = worldPos - boardOrigin;
@@ -63,9 +59,6 @@ public class Board : MonoBehaviour
         return grid[row, col];
     }
 
-    /// <summary>
-    /// Swaps two orbs on the board grid (does NOT move their transforms).
-    /// </summary>
     public void SwapOrbs(int r1, int c1, int r2, int c2)
     {
         var tmp = grid[r1, c1];
@@ -83,13 +76,9 @@ public class Board : MonoBehaviour
         {
             grid[r2, c2].Row = r2;
             grid[r2, c2].Col = c2;
-            // Don't animate the dragged orb — it follows the finger
         }
     }
 
-    /// <summary>
-    /// After the player releases, resolve all matches, drop, refill, repeat.
-    /// </summary>
     public void ResolveBoard()
     {
         StartCoroutine(ResolveCoroutine());
@@ -102,7 +91,6 @@ public class Board : MonoBehaviour
 
         while (true)
         {
-            // Wait for any drop animations to finish
             yield return new WaitForSeconds(0.15f);
 
             var matches = FindMatches();
@@ -111,7 +99,6 @@ public class Board : MonoBehaviour
             combo++;
             Debug.Log($"Combo {combo}! Matched {matches.Count} orbs.");
 
-            // Flash matched orbs
             foreach (var pos in matches)
             {
                 var orb = grid[pos.x, pos.y];
@@ -121,7 +108,6 @@ public class Board : MonoBehaviour
 
             yield return new WaitForSeconds(0.3f);
 
-            // Destroy matched orbs
             foreach (var pos in matches)
             {
                 var orb = grid[pos.x, pos.y];
@@ -134,11 +120,9 @@ public class Board : MonoBehaviour
 
             yield return new WaitForSeconds(0.1f);
 
-            // Drop existing orbs down
             DropOrbs();
             yield return new WaitForSeconds(0.25f);
 
-            // Refill empty spaces from top
             RefillBoard();
             yield return new WaitForSeconds(0.3f);
         }
@@ -149,10 +133,6 @@ public class Board : MonoBehaviour
         IsBusy = false;
     }
 
-    /// <summary>
-    /// Finds all matched orbs (3+ in a row horizontally or vertically).
-    /// Returns a set of (row, col) positions.
-    /// </summary>
     private HashSet<Vector2Int> FindMatches()
     {
         var matched = new HashSet<Vector2Int>();
@@ -216,9 +196,6 @@ public class Board : MonoBehaviour
         return matched;
     }
 
-    /// <summary>
-    /// Drops orbs down to fill gaps after matches are cleared.
-    /// </summary>
     private void DropOrbs()
     {
         for (int c = 0; c < Cols; c++)
@@ -242,9 +219,6 @@ public class Board : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Fills empty cells at the top with new random orbs that drop in.
-    /// </summary>
     private void RefillBoard()
     {
         for (int c = 0; c < Cols; c++)
@@ -262,7 +236,6 @@ public class Board : MonoBehaviour
                 if (grid[r, c] == null)
                 {
                     var orb = SpawnOrb(r, c);
-                    // Start above the board so it drops in
                     Vector3 spawnPos = GridToWorld(-1 - spawnIndex, c);
                     orb.SetPositionImmediate(spawnPos);
                     orb.SetTargetPosition(GridToWorld(r, c));
@@ -287,6 +260,7 @@ public class Board : MonoBehaviour
     {
         var color = (Orb.OrbColor)Random.Range(0, 6);
         var go = Instantiate(orbPrefab, GridToWorld(row, col), Quaternion.identity, transform);
+        go.SetActive(true);
         var orb = go.GetComponent<Orb>();
         orb.Init(color, row, col);
         orb.SetPositionImmediate(GridToWorld(row, col));

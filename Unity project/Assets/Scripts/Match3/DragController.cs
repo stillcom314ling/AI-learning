@@ -3,35 +3,52 @@ using UnityEngine;
 /// <summary>
 /// Handles touch/mouse drag input for PAD-style orb movement.
 /// Pick up an orb, drag across the board, orbs swap as you pass through.
+/// Touch-first design for Android with mouse fallback for editor testing.
 /// </summary>
 public class DragController : MonoBehaviour
 {
-    [SerializeField] private Board board;
-    [SerializeField] private Camera mainCamera;
+    private Board board;
+    private Camera mainCamera;
 
     private bool isDragging;
     private Orb draggedOrb;
     private int currentRow;
     private int currentCol;
+    private bool usingTouch;
+
+    public void Init(Board board, Camera camera)
+    {
+        this.board = board;
+        this.mainCamera = camera;
+    }
 
     private void Update()
     {
-        if (board.IsBusy) return;
-
-        if (Input.GetMouseButtonDown(0) || (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began))
+        if (board == null || mainCamera == null) return;
+        if (board.IsBusy)
         {
-            TryStartDrag(GetWorldPointerPos());
-        }
-        else if (isDragging && (Input.GetMouseButton(0) || (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Moved)))
-        {
-            ContinueDrag(GetWorldPointerPos());
-        }
-        else if (isDragging && (Input.GetMouseButtonUp(0) || (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Ended)))
-        {
-            EndDrag();
+            if (isDragging) EndDrag();
+            return;
         }
 
-        // Follow finger while dragging
+        // Touch input takes priority (Android)
+        if (Input.touchCount > 0)
+        {
+            usingTouch = true;
+            HandleTouch();
+        }
+        else if (!usingTouch)
+        {
+            // Mouse fallback (editor only — on Android, mouse events are
+            // synthesized from touches so we skip them when touch is active)
+            HandleMouse();
+        }
+        else if (Input.touchCount == 0)
+        {
+            usingTouch = false;
+        }
+
+        // Keep the dragged orb under the finger/cursor
         if (isDragging && draggedOrb != null)
         {
             Vector3 worldPos = GetWorldPointerPos();
@@ -39,16 +56,65 @@ public class DragController : MonoBehaviour
         }
     }
 
-    private Vector3 GetWorldPointerPos()
+    private void HandleTouch()
     {
-        Vector3 screenPos;
-        if (Input.touchCount > 0)
-            screenPos = Input.GetTouch(0).position;
-        else
-            screenPos = Input.mousePosition;
+        Touch touch = Input.GetTouch(0);
 
+        switch (touch.phase)
+        {
+            case TouchPhase.Began:
+                TryStartDrag(TouchToWorld(touch));
+                break;
+
+            case TouchPhase.Moved:
+            case TouchPhase.Stationary:
+                if (isDragging)
+                    ContinueDrag(TouchToWorld(touch));
+                break;
+
+            case TouchPhase.Ended:
+            case TouchPhase.Canceled:
+                if (isDragging)
+                    EndDrag();
+                break;
+        }
+    }
+
+    private void HandleMouse()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            TryStartDrag(MouseToWorld());
+        }
+        else if (isDragging && Input.GetMouseButton(0))
+        {
+            ContinueDrag(MouseToWorld());
+        }
+        else if (isDragging && Input.GetMouseButtonUp(0))
+        {
+            EndDrag();
+        }
+    }
+
+    private Vector3 TouchToWorld(Touch touch)
+    {
+        Vector3 screenPos = new Vector3(touch.position.x, touch.position.y,
+            Mathf.Abs(mainCamera.transform.position.z));
+        return mainCamera.ScreenToWorldPoint(screenPos);
+    }
+
+    private Vector3 MouseToWorld()
+    {
+        Vector3 screenPos = Input.mousePosition;
         screenPos.z = Mathf.Abs(mainCamera.transform.position.z);
         return mainCamera.ScreenToWorldPoint(screenPos);
+    }
+
+    private Vector3 GetWorldPointerPos()
+    {
+        if (Input.touchCount > 0)
+            return TouchToWorld(Input.GetTouch(0));
+        return MouseToWorld();
     }
 
     private void TryStartDrag(Vector3 worldPos)
@@ -63,7 +129,6 @@ public class DragController : MonoBehaviour
         currentRow = row;
         currentCol = col;
 
-        // Lift the dragged orb visually
         draggedOrb.SetSortingOrder(10);
         draggedOrb.SetScale(1.2f);
         draggedOrb.SetAlpha(0.85f);
@@ -74,14 +139,11 @@ public class DragController : MonoBehaviour
         if (!board.WorldToGrid(worldPos, out int row, out int col)) return;
         if (row == currentRow && col == currentCol) return;
 
-        // Only swap with adjacent cells (including diagonal)
         int dr = row - currentRow;
         int dc = col - currentCol;
         if (Mathf.Abs(dr) > 1 || Mathf.Abs(dc) > 1) return;
 
-        // Swap on the board
         board.SwapOrbs(row, col, currentRow, currentCol);
-
         currentRow = row;
         currentCol = col;
     }
@@ -90,7 +152,6 @@ public class DragController : MonoBehaviour
     {
         if (draggedOrb != null)
         {
-            // Snap the orb back to its grid cell
             draggedOrb.SetSortingOrder(0);
             draggedOrb.SetScale(1f);
             draggedOrb.SetAlpha(1f);
@@ -100,7 +161,6 @@ public class DragController : MonoBehaviour
         isDragging = false;
         draggedOrb = null;
 
-        // Resolve matches after the player releases
         board.ResolveBoard();
     }
 }

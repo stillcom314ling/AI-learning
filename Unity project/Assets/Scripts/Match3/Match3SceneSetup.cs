@@ -2,16 +2,19 @@ using UnityEngine;
 
 /// <summary>
 /// Runtime scene bootstrapper for the Match-3 prototype.
-/// Creates the orb prefab, board, drag controller, and camera setup
-/// so the game can run without needing a pre-built scene or prefabs.
-/// Attach this to an empty GameObject in a blank scene, or use the
-/// provided Match3 scene.
+/// Creates the orb prefab, board, drag controller, and camera setup.
+/// All wiring uses public Init methods (no reflection — safe for IL2CPP / Android).
+/// Attach to a GameObject in the Match3 scene.
 /// </summary>
 public class Match3SceneSetup : MonoBehaviour
 {
     private void Awake()
     {
         SetupCamera();
+    }
+
+    private void Start()
+    {
         GameObject orbPrefab = CreateOrbPrefab();
         Board board = CreateBoard(orbPrefab);
         CreateDragController(board);
@@ -25,6 +28,7 @@ public class Match3SceneSetup : MonoBehaviour
         {
             var camGo = new GameObject("Main Camera");
             cam = camGo.AddComponent<Camera>();
+            camGo.AddComponent<AudioListener>();
             camGo.tag = "MainCamera";
         }
 
@@ -37,7 +41,6 @@ public class Match3SceneSetup : MonoBehaviour
 
     private GameObject CreateOrbPrefab()
     {
-        // Create a circle sprite at runtime
         var prefab = new GameObject("OrbPrefab");
         prefab.SetActive(false);
 
@@ -52,12 +55,7 @@ public class Match3SceneSetup : MonoBehaviour
     {
         var boardGo = new GameObject("Board");
         var board = boardGo.AddComponent<Board>();
-
-        // Use reflection to set the serialized orbPrefab field
-        var field = typeof(Board).GetField("orbPrefab",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        field?.SetValue(board, orbPrefab);
-
+        board.Init(orbPrefab);
         return board;
     }
 
@@ -65,19 +63,11 @@ public class Match3SceneSetup : MonoBehaviour
     {
         var dcGo = new GameObject("DragController");
         var dc = dcGo.AddComponent<DragController>();
-
-        var boardField = typeof(DragController).GetField("board",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        boardField?.SetValue(dc, board);
-
-        var camField = typeof(DragController).GetField("mainCamera",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        camField?.SetValue(dc, Camera.main);
+        dc.Init(board, Camera.main);
     }
 
     private void SetupBackground()
     {
-        // Draw a subtle board background
         var bgGo = new GameObject("BoardBackground");
         var sr = bgGo.AddComponent<SpriteRenderer>();
         sr.sprite = CreateSquareSprite(4);
@@ -90,9 +80,6 @@ public class Match3SceneSetup : MonoBehaviour
         bgGo.transform.position = new Vector3(0, 0, 1f);
     }
 
-    /// <summary>
-    /// Creates a circle sprite texture at runtime — no asset files needed.
-    /// </summary>
     private static Sprite CreateCircleSprite(int resolution)
     {
         var tex = new Texture2D(resolution, resolution, TextureFormat.RGBA32, false);
@@ -108,7 +95,6 @@ public class Match3SceneSetup : MonoBehaviour
                 float dist = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
                 if (dist <= radius - 1f)
                 {
-                    // Slight highlight in upper-left for 3D look
                     float highlight = Mathf.Clamp01(1f - Vector2.Distance(
                         new Vector2(x, y),
                         new Vector2(center - radius * 0.3f, center + radius * 0.3f)
@@ -118,7 +104,6 @@ public class Match3SceneSetup : MonoBehaviour
                 }
                 else if (dist <= radius)
                 {
-                    // Anti-aliased edge
                     float alpha = Mathf.Clamp01(radius - dist + 1f);
                     tex.SetPixel(x, y, new Color(0.7f, 0.7f, 0.7f, alpha));
                 }

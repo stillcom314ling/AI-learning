@@ -2,11 +2,16 @@ name: Unity License Activation
 
 on:
   workflow_dispatch:
+  issue_comment:
+    types: [created]
 
 jobs:
   request-activation-file:
     name: Request Activation File
     runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue.pull_request && contains(github.event.comment.body, '/activate'))
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

@@ -7,6 +7,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'launcher/index.html'),
         'sdf-playground': resolve(__dirname, 'prototypes/sdf-playground/index.html'),
+        'match3-pad': resolve(__dirname, 'prototypes/match3-pad/index.html'),
       },
     },
   },
